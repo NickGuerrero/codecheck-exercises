@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Arr, Seq } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+addExercise(function*(sim, state) {
+if (state === undefined) { 
+  state = {
+    a: sim.randInt(4, 6)
+  }
+}
+
+const code = sim.add(0, 0, new Code(`
+def generate(numRows):
+    if(numRows == 0):
+        return [[]]
+    output = [[1]]
+    for i in range(1, numRows):
+        lst = [1]
+        if i >= 2:
+            for x in range(0, i-1):
+                lst.append(output[i - 1][x] + output[i - 1][x + 1])
+        lst.append(1)
+        output.append(lst)
+    return output
+
+generate(${state.a})
+`));
+
+// Start the simulation
+const vars = sim.add(10, 0, new Frame("generate"));
+sim.addButtons("True", "False");
+code.go(14); yield sim.start(state);
+
+// Initialize the function
+vars.numRows = state.a;
+code.go(1); yield sim.next("Initialize the function");
+code.go(2); yield sim.click(bool_to_str(sim.eq(vars.numRows, 0)), "True or False?"); // Should always be False to run the algorithm
+
+// Embed the list of lists into the output variable
+vars.i = null;
+vars.lst = null;
+vars.output = new Arr();
+vars.output[0] = new Seq();
+vars.output[0][0] = 1;
+code.go(4); yield sim.next("Initialize the output list", "We'll display a few variables ahead of time for ease of use");
+
+// For loop
+code.go(5); yield sim.next("Begin the for loop");
+for(vars.i = 1; vars.i < vars.numRows; vars.i++){
+    if(vars.i > 1){
+        code.go(5); yield sim.next("Continue the for loop");
+    }
+    vars.lst = new Seq();
+    vars.lst[0] = 1;
+    code.go(6); yield sim.next("Create an array with 1 element");
+    code.go(7); yield sim.click(bool_to_str(vars.i >= 2), "True or False?");
+    if(vars.i >= 2){
+        code.go(8); yield sim.next("Begin the for loop");
+        for(vars.x = 0; vars.x < vars.i - 1; vars.x++){
+            if(vars.x > 0){
+                code.go(8); yield sim.next("Continue the for loop");
+            }
+            code.go(9);
+            vars.lst[vars.lst.length] = yield sim.ask(vars.output[vars.i - 1][vars.x] + vars.output[vars.i - 1][vars.x + 1], "What's the value being appended?");
+        }
+        delete vars.x;
+    }
+    code.go(10); vars.lst[vars.lst.length] = yield sim.ask(1, "What's the last value being appended to the list?");
+    vars.output[vars.output.length] = vars.lst;
+    code.go(11); yield sim.next("Append lst to the output");
+}
+
+// Finish the program
+code.go(12); yield sim.next("The output is now returned, Pascal's triangle has been created")
+code.go(14); yield sim.next("The program finishes");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

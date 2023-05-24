@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Obj } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+// From Mozilla: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1) + min); // The maximum is exclusive and the minimum is inclusive
+}
+
+// Create random samples for palindrome testing
+function randnumstring(min_length, max_length, diff_digits){
+    let x = "";
+    for(let i = 0; i < min_length; i++){
+        x += parseInt(getRandomInt(1, diff_digits));
+    }
+    for(let i = 0; i < getRandomInt(0, max_length - min_length); i++){
+        x += parseInt(getRandomInt(1, diff_digits));
+    }
+    return x;
+}
+
+// Quick boolean to string function, used for sim buttons
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+addExercise(function*(sim, state) {
+if (state === undefined) { 
+  state = {
+    a: parseInt(randnumstring(3, 5, 3))
+  }
+}
+
+function* isPalindromeNumber(n){
+    // Initialize function
+    const pal_vars = sim.add(10, 1, new Frame());
+    pal_vars.n = state.a;
+    code.go(15); yield sim.next("n is initialized");
+    code.go(16); yield sim.next("We check to validate that the palindrome is a non-zero, positive number");
+    pal_vars.rN = null;
+    code.go(19); yield sim.next("reverse is called");
+    let revX = yield* reverse(state.a);
+    
+    // Finish isPalindromeNumber
+    code.go(19); yield sim.set(pal_vars.rN, revX);
+    code.go(21); yield sim.click(bool_to_str(sim.eq(pal_vars.n, pal_vars.rN)), "True or False?");
+    if(sim.eq(pal_vars.n, pal_vars.rN)){
+        code.go(22); yield sim.next("The number is a palindrome");
+    } else {
+        code.go(24); yield sim.next("The number isn't a palindrome");
+    }
+}
+
+function* reverse(x){
+    // Initialize reverse
+    const rev_vars = sim.add(9.2, 2.5, new Frame());
+    rev_vars.x = state.a;
+    code.go(1); yield sim.next("x is initialized");
+    rev_vars.reverseX = null;
+    code.go(3); yield sim.set(rev_vars.reverseX, 0);
+
+    // Reverse loop
+    while(true){
+        code.go(5); yield sim.next("While loop will always continue");
+        code.go(6); yield sim.click(bool_to_str(rev_vars.x == 0), "True or False?");
+        // Break condition
+        if(rev_vars.x == 0){
+            code.go(7); yield sim.next("Break ends the loop");
+            break;
+        }
+        // Extract the last digit
+        code.go(9); rev_vars.last_digit = yield sim.ask(rev_vars.x % 10, "What's the last digit of x?");
+        code.go(10); yield sim.set(rev_vars.x, Math.floor(rev_vars.x/10));
+        // Update reverseX
+        code.go(12); yield sim.set(rev_vars.reverseX, (rev_vars.reverseX * 10) + rev_vars.last_digit);
+    }
+    // Clear frame and return reverse result
+    code.go(13); yield sim.next("reverse finishes");
+    let temp = rev_vars.reverseX;
+    delete rev_vars.last_digit;
+    delete rev_vars.x;
+    delete rev_vars.reverseX;
+    return temp;
+}
+
+// Palindrome Number Problem
+const code = sim.add(0, 0, new Code(`
+def reverse(x):
+   # Initialize reverseX with last digit
+   reverseX = 0;
+   # Loop through the remaining digits
+   while True:
+      if (x == 0):
+         break;
+    #Extract last_digit
+      last_digit = x % 10;
+      x = x // 10;
+    # Calculate reverseX = reverseX * 10 + last_digit
+      reverseX = reverseX * 10 + last_digit
+   return reverseX;
+
+def isPalindromeNumber(n):
+   if (n < 0):
+      return False;
+   # Reverse n and store in rN
+   rN = reverse(n);
+   # Compare n and rN - if equal return True; else return False
+   if (n == rN):
+      return True;
+   else:
+      return False;
+
+num = int(${state.a})
+print(isPalindromeNumber(num))
+`));
+
+// Begin Simulation
+sim.addButtons('True', 'False');
+const global_vars = sim.add(10, 0, new Frame());
+global_vars.num = parseInt(state.a);
+code.go(26); yield sim.start(state);
+code.go(27); yield sim.next("isPalindromeNumber is called");
+yield* isPalindromeNumber(state.a);
+code.go(27); yield sim.next("Finish the program");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

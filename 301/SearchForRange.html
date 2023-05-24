@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Arr } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+addExercise(function*(sim, state) {
+if (state === undefined) { 
+  state = {
+    a: [5, 7, 7, 8, 8, 10],
+    b: 8
+  }
+}
+
+const code = sim.add(0, 0, new Code(`
+def search_for_range(array, target):
+  # perform a binary search that searches to the left when target has been found
+  # the resulting index will always be the target's starting index
+  lo, hi = 0, len(array)
+  while lo < hi:
+      mid = (lo + hi) // 2
+      if array[mid] > target:
+          hi = mid
+      elif array[mid] == target:
+          hi = mid
+      else:
+          lo = mid + 1
+  start = hi
+  
+  # if the target is not in this array, return failure indices
+  if array[start] != target: return [-1, -1]
+  
+  # perform a binary search that searches to the right when target has been found
+  # the resulting index will always be the target's end index
+  lo, hi = 0, len(array)
+  while lo < hi:
+      mid = (lo + hi) // 2
+      if array[mid] > target:
+          hi = mid
+      elif array[mid] == target:
+          lo = mid + 1
+      else:
+          lo = mid + 1
+  end = hi - 1
+  
+  return [start, end]
+
+print(search_for_range([${state.a.toString()}], ${state.b}))
+`));
+
+// Begin the simulation
+sim.addButtons("True", "False");
+const vars = sim.add(12, 0, new Frame());
+code.go(33); yield sim.start(state);
+
+// Initialize the function
+const arr = sim.add(12, 5, new Arr("array"));
+arr.length = state.a.length;
+for(let i = 0; i < state.a.length; i++){
+    arr[i] = state.a[i];
+}
+vars.target = state.b;
+code.go(1); yield sim.next("Initialize the function");
+vars.lo = 0;
+vars.hi = arr.length;
+code.go(4); yield sim.next("Set both lo and hi");
+
+// Binary Search Low
+vars.mid = null;
+let first_time = 1;
+code.go(5); yield sim.next("Begin the while loop");
+while(vars.lo < vars.hi){
+    if(first_time < 1){
+        code.go(5); yield sim.next("Continue the while loop");
+    }
+    first_time = 0;
+    code.go(6); yield sim.set(vars.mid, Math.floor((vars.lo + vars.hi) / 2));
+    code.go(7); yield sim.click(bool_to_str(arr[vars.mid] > vars.target), "True or False?");
+    if(arr[vars.mid] > vars.target){
+        code.go(8); yield sim.set(vars.hi, vars.mid);
+        continue;
+    }
+    code.go(9); yield sim.click(bool_to_str(sim.eq(arr[vars.mid], vars.target)), "True or False?");
+    if(sim.eq(arr[vars.mid], vars.target)){
+        code.go(10); yield sim.set(vars.hi, vars.mid);
+        continue;
+    }
+    code.go(12); yield sim.set(vars.lo, vars.mid + 1);
+}
+vars.start = vars.hi;
+code.go(13); yield sim.next("Set the start of the range");
+
+// Default if the number isn't in array. Note: All samples should be in array, so this is always False
+code.go(16); yield sim.click(bool_to_str(!sim.eq(arr[vars.start], vars.target)), "True or False?");
+
+// Clear variables for the next loop
+delete vars.lo;
+delete vars.hi;
+delete vars.mid;
+
+// Binary search high
+vars.lo = 0;
+vars.hi = arr.length;
+code.go(20); yield sim.next("Set both lo and hi");
+first_time = 1;
+vars.mid = null;
+code.go(21); yield sim.next("Begin the while loop");
+while(vars.lo < vars.hi){
+    if(first_time < 1){
+        code.go(21); yield sim.next("Continue the while loop");
+    }
+    first_time = 0;
+    code.go(22); yield sim.set(vars.mid, Math.floor((vars.lo + vars.hi) / 2));
+    code.go(23); yield sim.click(bool_to_str(arr[vars.mid] > vars.target), "True or False?");
+    if(arr[vars.mid] > vars.target){
+        code.go(24); yield sim.set(vars.hi, vars.mid);
+        continue;
+    }
+    code.go(25); yield sim.click(bool_to_str(sim.eq(arr[vars.mid], vars.target)), "True or False?");
+    if(sim.eq(arr[vars.mid], vars.target)){
+        code.go(26); yield sim.set(vars.lo, vars.mid + 1);
+        continue;
+    }
+    code.go(28); yield sim.set(vars.lo, vars.mid + 1);
+}
+vars.end = vars.hi - 1;
+code.go(29); yield sim.next("Set the end of the range");
+
+// Finish the program
+code.go(31); yield sim.next(`The result returns [${vars.start}, ${vars.end}]`);
+code.go(33); yield sim.next("The program finishes");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

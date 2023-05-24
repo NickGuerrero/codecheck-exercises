@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Mat } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+// Quick boolean to string function, used for sim buttons
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+// From Mozilla MDN Web Docs
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
+}
+
+// Generate input string
+function randgen_string(ln, dif){
+    let x = Array(ln);
+    let num = 0;
+    for(let i = 0; i < ln; i++){
+        num = 97 + getRandomInt(0, dif);
+        if(num == 103) num += 1; // Blocks G to prevent a possible slur
+        x[i] = String.fromCharCode(num);
+    }
+    return x.join("").toUpperCase();
+}
+
+addExercise(function*(sim, state) {
+if (state === undefined) { 
+  state = {
+    a: randgen_string(sim.randInt(4, 7), 12)
+  }
+}
+
+// Code Block Display
+const code = sim.add(0, 0, new Code(`
+def firstRepeatedChar(str1):
+  str1 = str1.lower()
+  res = ''
+  count_arr = [-1] * 128
+  for ch in str1:
+    count_arr[ord(ch)] = count_arr[ord(ch)] + 1
+  for ch in str1:
+    if (count_arr[ord(ch)] > 0):
+      return ch
+  return res
+
+print(firstRepeatedChar("${state.a}"))
+`));
+
+// Simulation start
+sim.addButtons("True", "False");
+code.go(12); yield sim.start(state);
+
+// Initialize the function
+const vars = sim.add(8, 0, new Frame());
+vars.str1 = state.a;
+code.go(1); yield sim.next("Initialize the function");
+code.go(2); yield sim.set(vars.str1, state.a.toLowerCase());
+vars.res = "";
+code.go(3); yield sim.next("Initialize res");
+
+// Create the array display with matrix for ease of use
+const diff = new Set(state.a.toLowerCase());
+const mat = sim.add(8, 3, new Mat([Array(diff.size + 1), Array(diff.size + 1), Array(diff.size + 1)]));
+let diff_alpha = Array.from(diff).sort();
+const diff_map = new Map();
+mat[0][0] = "Array";
+mat[1][0] = "Index";
+mat[2][0] = "Char";
+for(let i = 0; i < diff_alpha.length; i++){
+    mat[0][i + 1] = -1;
+    mat[1][i + 1] = diff_alpha[i].charCodeAt(0);
+    mat[2][i + 1] = diff_alpha[i];
+    diff_map.set(diff_alpha[i], i + 1);
+}
+vars.count_arr = mat;
+code.go(4); yield sim.next("We'll create an array with a length of the ASCII character table",
+"Atlhough it's an array, we'll use this table to refer to the relevant values of such a large table");
+
+// First for loop
+code.go(5); yield sim.next("Begin the for loop");
+for(let i = 0; i < vars.str1.length; i++){
+    vars.ch = vars.str1.charAt(i);
+    if(i != 0){
+        code.go(5); yield sim.pause("Continuing the for loop");
+    }
+    code.go(6); yield sim.ask(vars.str1.charAt(i), "Which letter are we using?");
+    yield sim.ask(vars.str1.charCodeAt(i), "What index number are we updating?");
+    mat[0][diff_map.get(vars.str1.charAt(i))] = yield sim.ask(mat[0][diff_map.get(vars.str1.charAt(i))] + 1, "What is the new value?");
+}
+delete vars.ch;
+
+// Second for loop
+var hasRepChar = 0;
+code.go(7); yield sim.next("Begin the second for loop");
+for(let i = 0; i < vars.str1.length; i++){
+    vars.ch = vars.str1.charAt(i);
+    if(i != 0){
+        code.go(7); yield sim.pause("Continuing the for loop");
+    }
+    code.go(8); yield sim.click(bool_to_str(mat[0][diff_map.get(vars.str1.charAt(i))] > 0), "Is this condition true or false?");
+    if(mat[0][diff_map.get(vars.str1.charAt(i))] > 0){
+        code.go(9); yield sim.next("We return the current character");
+        hasRepChar = 1;
+        break;
+    }
+}
+
+// Finish the program
+if(hasRepChar < 1){
+    code.go(10); yield sim.next("No repeated character was found, so we return res");
+}
+code.go(12); yield sim.next("Finish the program");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

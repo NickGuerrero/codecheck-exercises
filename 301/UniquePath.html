@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Mat } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+// Quick boolean to string function, used for sim buttons
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+addExercise(function*(sim, state) {
+if (state === undefined) { 
+    state = {
+        a: 4,
+        b: 10
+    }
+}
+
+// Create the code block
+const code = sim.add(0, 0, new Code(`
+def uniquePaths(A, B):
+    A -=1;
+    B-=1;
+    num = A+B
+    den = A
+    res = 1
+    for i in range(A):
+        res *= (num-i)/(den-i)
+    return int(round(res))
+
+A = ${state.a}
+B = ${state.b}
+print(uniquePaths(A,B))
+`));
+
+// Create Matrix (Display purpose only)
+//const mat = sim.add(11, 0, new Mat([Array(4), [5, 10, 11, 8], [9, 6, 7, 12], [4, 15, 14, 1]]))
+const mat = sim.add(9, 0, new Mat([Array(10), Array(10), Array(10), Array(10)]))
+for(let i = 0; i < state.a; i++){
+    for(let j = 0; j < state.b; j++){
+        mat[i][j] = "-";
+    }
+}
+mat[0][0] = "Start";
+mat[state.a - 1][state.b - 1] = "End";
+
+
+// Start the simulation
+sim.addButtons("True", "False");
+const vars = sim.add(6, 0, new Frame());
+vars.A = state.a;
+vars.B = state.b;
+yield sim.start(state);
+code.go(13); yield sim.next("Call uniquePaths function");
+
+// Initialize the function
+code.go(1); yield sim.next("Initialize the uniquePaths function");
+code.go(2); yield sim.set(vars.A, vars.A - 1);
+code.go(3); yield sim.set(vars.B, vars.B - 1);
+vars.num = null;
+code.go(4); yield sim.set(vars.num, vars.A + vars.B);
+vars.den = null;
+code.go(5); yield sim.set(vars.den, vars.A);
+vars.res = null;
+code.go(6); yield sim.set(vars.res, 1);
+
+// For loop
+code.go(7); yield sim.next("Begin the for loop");
+vars.i = 0;
+for(; vars.i < vars.A; vars.i++){
+    code.go(8); yield sim.set(vars.res, vars.res * ((vars.num - vars.i) / (vars.den - vars.i)));
+    code.go(7); yield sim.click(bool_to_str(vars.i + 1 < vars.A), "Does the loop continue, True or False?")
+}
+
+// Finish the program
+code.go(9); yield sim.next("The function returns");
+code.go(13); yield sim.next("The number of unique paths is determined");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Arr } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+const samples = ["6+9-12", "5+5-5+5", "9-3-2-1"];
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+addExercise(function*(sim, state) {
+if (state === undefined) { 
+  state = {
+    a: samples[sim.randInt(0, 2)]
+  }
+}
+
+const code = sim.add(0, 0, new Code(`
+def calculate(expression):
+    # Separate operators and operands
+    ops = []
+    new_exp = "_"
+    for ch in expression: 
+        if(ch == "+" or ch == "-"):
+            new_exp += "_"
+            ops.append(ch)
+        else: 
+            new_exp += ch
+
+    #Split string by space
+    new_exp = new_exp.split("_")
+    
+    if(len(new_exp) == 1): 
+        return int(new_exp[0])
+
+    #Calculate
+    result = int(new_exp[0])
+    for i in range(len(ops)):
+        if(ops[i] == "+"): 
+            result += int(new_exp[i + 1])
+        else: 
+            result -= int(new_exp[i + 1])
+    return result
+
+print(calculate(${state.a}))
+`));
+
+// Begin the simulation
+sim.addButtons("True", "False");
+const vars = sim.add(10, 0, new Frame());
+code.go(27); yield sim.start(state);
+
+// Initialize the function
+vars.expression = state.a;
+code.go(1); yield sim.next("Initialize the function");
+const ops_arr = sim.add(10, 5, new Arr("ops"));
+code.go(3); yield sim.next("Initialize an array for holding the operators");
+vars.new_exp = "";
+code.go(4); yield sim.next("Initialize a string for the filtered expression");
+
+// Separate operators and operands loop
+vars.ch = null;;
+code.go(5); yield sim.next("Begin for loop");
+for(let i = 0; i < vars.expression.length; i++){
+    vars.ch = vars.expression.charAt(i);
+    if(i > 0){
+        code.go(5); yield sim.next("Continue for loop");
+    }
+    code.go(6); yield sim.click(bool_to_str(sim.eq(vars.ch, "+") || sim.eq(vars.ch, "-")), "True or False?");
+    if(sim.eq(vars.ch, "+") || sim.eq(vars.ch, "-")){
+        code.go(7); yield sim.set(vars.new_exp, vars.new_exp + "_");
+        ops_arr.length += 1;
+        code.go(8); yield sim.set(ops_arr[ops_arr.length - 1], vars.ch);
+        
+    } else {
+        code.go(10); yield sim.set(vars.new_exp, vars.new_exp + vars.ch);
+    }
+}
+
+// Split string by space
+const new_exp_pre_arr = vars.new_exp.split("_");
+const new_exp_arr = sim.add(13, 5, new Arr());
+new_exp_arr.length = new_exp_pre_arr.length
+for(let i = 0; i < new_exp_pre_arr.length; i++){
+    new_exp_arr[i] = new_exp_pre_arr[i]
+}
+vars.new_exp = new_exp_arr;
+code.go(13); yield sim.next("Create new array to hold the split string");
+
+// Check arg count, should always be false so the full algorithm can run
+code.go(15); yield sim.click(bool_to_str(sim.eq(new_exp_arr.length, 1)), "True or False?");
+
+// Calculate
+vars.result = parseInt(new_exp_arr[0]);
+code.go(19); yield sim.next("Initialize result");
+code.go(20); yield sim.next("Begin the for loop");
+for(vars.i = 0; vars.i < ops_arr.length; vars.i++){
+    if(vars.i > 0){
+        code.go(20); yield sim.next("Continue the for loop");
+    }
+    code.go(21); yield sim.click(bool_to_str(sim.eq(ops_arr[vars.i], "+")), "True of False?");
+    if(sim.eq(ops_arr[vars.i], "+")){
+        code.go(22); yield sim.set(vars.result, vars.result + parseInt(new_exp_arr[vars.i + 1]));
+    } else {
+        code.go(24); yield sim.set(vars.result, vars.result - parseInt(new_exp_arr[vars.i + 1]));
+    }
+}
+
+// Finish the program
+code.go(25); yield sim.next("The function returns result");
+code.go(27); yield sim.next("The program finishes");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

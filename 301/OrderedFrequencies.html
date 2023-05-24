@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Obj, Mat, Arr } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+// Fa la la, la la la, la la la, la la la, fa la la, la la la, la la la la
+addExercise(function*(sim, state) {
+if (state === undefined) { 
+  state = {
+    a: "Fa la la, da la la, fa la la"
+  }
+}
+
+const code = sim.add(0, 0, new Code(`
+def strFrequency(str_a):
+    # Make case the same
+    str_a = str_a.lower()
+
+    # Remove special characters
+    no_sc = ""
+    for i in range(0,len(str_a)):
+        if(str_a[i].isalnum() or (str_a[i] == ' ')):
+            no_sc += str_a[i]
+
+    # Split string into array by space
+    all_words = no_sc.split()
+
+    # Count frequency
+    mydict = {}
+    for word in all_words:
+        if(word in mydict):
+           mydict[word] = mydict[word] + 1
+        else:
+           mydict[word] = 1
+    
+    # Sort 
+    result = []
+    for k in sorted(mydict, key=mydict.get, reverse=True):
+       result.append((k,mydict[k]))
+    return result
+
+x = "${state.a}"
+print(strFrequency(x))
+`));
+
+// Begin the simulation
+const vars = sim.add(0, 10.2, new Frame());
+code.go(29); yield sim.start(state);
+
+// Begin the function
+vars.str_a = state.a;
+code.go(1); yield sim.next("Initialize strFrequency");
+code.go(3); yield sim.set(vars.str_a, vars.str_a.toLowerCase());
+
+// Simplify the special character clean
+const re = /[^A-Za-z\s]/g;
+vars.no_sc = null;
+code.go(6); yield sim.next("Initialize no_sc");
+code.go(7); yield sim.next("This iterates per character, so we're going to skim over this");
+vars.no_sc = vars.str_a;
+code.go(10); yield sim.set(vars.no_sc, vars.str_a.replaceAll(re, ""), "What's the value of no_sc after the for loop?", 
+"no_sc has be pre-filled with the original no_sc to save time");
+
+// Split the string => Create the array
+const arr_words = vars.no_sc.split(" ");
+const all_words = sim.add(0, 12, new Mat([Array(arr_words.length + 1), Array(arr_words.length + 1)]));
+all_words[0][0] = "all_words";
+all_words[1][0] = "Index";
+for(let i = 0; i < arr_words.length; i++){
+    all_words[0][i + 1] = arr_words[i];
+    all_words[1][i + 1] = i;
+}
+code.go(12); yield sim.next("Create an array from the string");
+
+// Count frequency loop
+const mydict = sim.add(11, 2, new Obj("mydict"));
+code.go(15); yield sim.next("Create a dictionary to hold word count");
+
+// For loop
+const side_vars = sim.add(11, 0, new Frame());
+const freq_words = new Set();
+side_vars.word = null;
+code.go(16); yield sim.next("Begin for loop");
+for(let i = 0; i < arr_words.length; i++){
+    side_vars.word = arr_words[i];
+    if(i > 0){
+        code.go(16); yield sim.next("Continue the for loop");
+    }
+    code.go(17);
+    if(freq_words.has(arr_words[i])){
+        yield code.ask(18, "Select the next line to be executed. (Line 18 or Line 20)");
+        yield sim.set(mydict[arr_words[i]], mydict[arr_words[i]] + 1);
+    } else {
+        yield code.ask(20, "Select the next line to be executed. (Line 18 or Line 20)");
+        mydict[arr_words[i]] = 1;
+        yield sim.next("The word is now added to the dictionary.");
+        freq_words.add(arr_words[i]);
+    }
+}
+delete side_vars.word;
+
+// Prepare result array
+const res_arr = sim.add(11, 5, new Arr("result"));
+res_arr.length = freq_words.size;
+code.go(23); yield sim.next("Create result array to hold final answer");
+
+// Prepare sorted array
+const sorted_arr = sim.add(13, 5, new Arr("sorted"));
+sorted_arr.length = freq_words.size;
+var sorted_pairs = []
+for(let item of freq_words){
+    sorted_pairs.push([item, mydict[item]]);
+}
+sorted_pairs.sort(function compare(x, y){ return y[1] - x[1] });
+for(let i = 0; i < sorted_pairs.length; i++){
+    sorted_arr[i] = sorted_pairs[i][0];
+}
+code.go(24); yield sim.next("Iterate through the sorted array to construct the result");
+
+// Create the result array
+side_vars.k = null;
+for(let i = 0; i < sorted_pairs.length; i++){
+    side_vars.k = sorted_pairs[i][0];
+    if(i > 0){
+        code.go(24); yield sim.next("Continue the for loop")
+    }
+    code.go(25); yield sim.set(res_arr[i], '("' + sorted_pairs[i][0] + '", ' + sorted_pairs[i][1] + ')',
+    "Enter the tuple at index " + i.toString() + ". For example: (\"fa\", 10)");
+}
+
+// Finish the program
+code.go(26); yield sim.next("Return the result array");
+code.go(29); yield sim.next("The frequency of words has been determined");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

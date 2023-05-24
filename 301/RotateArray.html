@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Arr } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+// Rotate array, simulate the pop then insert(0) operation
+function rotate_array(arr, length){
+    for(let i = length - 1; i > 0; i--){
+        arr[i] = arr[i - 1];
+    }
+}
+
+// Quick boolean to string function, used for sim buttons
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+addExercise(function*(sim, state) {
+if (state === undefined) { 
+    state = {
+        a: sim.randInt(5, 7)
+    }
+}
+
+sim.addButtons("True", "False");
+const code = sim.add(0, 0, new Code(`
+def rotate_array(input_array, k):
+    k = k % len(input_array)
+    for x in range(1,k+1):
+        end_of_list = input_array.pop()
+        input_array.insert(0,end_of_list)
+
+a_list = [9, 8, 7, 6, 5, 4, 3, 2, 1]
+rotate_array(a_list, ${state.a})
+print(a_list)
+`));
+
+// Construct the a_list array
+const a_list = sim.add(11, 0.1, new Arr('a_list'));
+a_list.length = 9;
+for(let i = 9; i > 0; i--){
+    a_list[9 - i] = i;
+}
+
+// Start the simulation
+code.go(7); yield sim.start(state);
+code.go(8); yield sim.next("The function is called");
+
+// Initialize the function
+const vars = sim.add(6.5, 0, new Frame());
+vars.input_array = a_list;
+vars.k = state.a;
+//vars.end_of_list = null;
+code.go(1); yield sim.next("Initialize the function");
+code.go(2); yield sim.set(vars.k, vars.k % a_list.length);
+
+// For loop
+vars.x = 1;
+vars.end_of_list = null;
+code.go(3); yield sim.next("Initialize the for loop");
+for(; vars.x < vars.k + 1; vars.x++){
+    code.go(4); yield sim.set(vars.end_of_list, a_list[a_list.length - 1]);
+    //a_list[a_list.length - 1] = null;
+    rotate_array(a_list, a_list.length);
+    a_list[0] = null;
+    code.go(5); yield sim.set(a_list[0], vars.end_of_list);
+    code.go(3); yield sim.click(bool_to_str(vars.x < vars.k), "Does the loop continue, True or False?");
+}
+
+// Finish the program
+code.go(8); yield sim.next("The function returns nothing, but the array has been rotated");
+code.go(9); yield sim.next("The program finishes");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

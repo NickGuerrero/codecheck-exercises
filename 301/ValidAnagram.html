@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Mat } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+// Samples
+const sample_a = ["rat", "vera", "lore"];
+const sample_b = ["tar", "rave", "role"];
+addExercise(function*(sim, state) {
+if (state === undefined) {
+    let ex = sim.randInt(0, 2);
+    state = {
+        a: sample_a[ex],
+        b: sample_b[ex]
+    }
+}
+
+// Given two strings s and t , write a function to determine if t is an anagram of s.
+const code = sim.add(0, 0, new Code(`
+def is_anagram_pair(string_1, string_2):
+    """Returns true if string_1 and string_2 are anagram pairs"""
+    s_total = 0
+    t_total = 0
+    if len(string_1) != len(string_2):
+       return False
+    for char in string_1:
+        s_total += ord(char)
+    for char in string_2:
+        t_total += ord(char)
+    return s_total == t_total
+
+print(is_anagram_pair("${state.a}", "${state.b}"))
+`));
+
+// Create character code table for ease of use
+const char_table = sim.add(0, 5, new Mat([Array(27), Array(27)]));
+const alphabet  = 'abcdefghijklmnopqrstuvwxyz'.split('');
+char_table[0][0] = "x";
+char_table[1][0] = "ord(x)";
+for(let i = 0; i < 26; i++){
+    char_table[0][i + 1] = alphabet[i];
+    char_table[1][i + 1] = alphabet[i].charCodeAt(0);
+}
+
+// Begin the simulation
+sim.addButtons("True", "False");
+code.go(13); yield sim.start(state);
+
+// Initialize the function
+const vars = sim.add(10, 0, new Frame());
+vars.string_1 = state.a;
+vars.string_2 = state.b;
+code.go(1); yield sim.next("Initialize the function");
+vars.s_total = 0;
+code.go(3); yield sim.next("Initialize s_total");
+vars.t_total = 0;
+code.go(4); yield sim.next("Initialize t_total");
+
+// Length Equality Check
+code.go(5); yield sim.click("False", "True or False?") // This always has to be false or the algorithm won't matter
+
+// For loop str1
+code.go(7); yield sim.next("Begin for loop for str1");
+for(let i = 0; i < state.a.length; i++){
+    if(i > 0){
+        code.go(7); yield sim.next("Continue for loop");
+    }
+    code.go(8); yield sim.set(vars.s_total, vars.s_total + state.a.charCodeAt(i));
+}
+
+// For loop str2
+code.go(9); yield sim.next("Begin for loop for str2");
+for(let i = 0; i < state.b.length; i++){
+    if(i > 0){
+        code.go(9); yield sim.next("Continue for loop");
+    }
+    code.go(10); yield sim.set(vars.t_total, vars.t_total + state.b.charCodeAt(i));
+}
+
+// Finish the program
+code.go(11); yield sim.click(bool_to_str(sim.eq(vars.s_total, vars.t_total)), "What does the function return, True or False?")
+code.go(13); yield sim.next("Program finishes");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

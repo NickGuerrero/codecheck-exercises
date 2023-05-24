@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Obj, Arr, Seq } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+// Stack Overflow: https://stackoverflow.com/questions/3115982/how-to-check-if-two-arrays-are-equal-with-javascript
+function arraysEqual(a, b) {
+    if (a == null || b == null) return false;
+    if (a.length !== b.length) return false;
+    // Compare by elements
+    for (var i = 0; i < a.length; ++i) {
+        if (+a[i] !== +b[i]) return false;
+    }
+    return true;
+}
+
+addExercise(function*(sim, state) {
+if (state === undefined) { 
+  state = {
+    a: [91, 4, 64, 78],
+    b: [[4, 64], [91], [78]]
+  }
+}
+
+function* arrayFormation(arr, pieces){
+    // Array Deep Copy: For some reason, the tracer library destroys the arrays on insertion
+    const arr_copy = Array(arr.length);
+    const pieces_copy = Array(pieces.length);
+    for(let i = 0; i < arr.length; i++){
+        arr_copy[i] = arr[i];
+    }
+    for(let i = 0; i < pieces.length; i++){
+        pieces_copy[i] = Array(pieces[i].length);
+        for(let j = 0; j < pieces[i].length; j++){
+            pieces_copy[i][j] = pieces[i][j];
+        }
+    }
+    
+    // Initialize the variables
+    vars.arr = new Seq(arr_copy);
+    vars.pieces = new Arr();
+    for(let i = 0; i < pieces.length; i++){
+        vars.pieces[i] = new Seq(pieces_copy[i]);
+    }
+    code.go(1); yield sim.next("Initialize the function.");
+    vars.found = 0;
+    code.go(3); yield sim.next("Initialize found.");
+    
+    // Load arr into map
+    const arr_map = sim.add(15, 0, new Obj("arr_map"));
+    code.go(6); yield sim.next("Initialize arr_map.");
+    code.go(7); yield sim.next("Add each of the integers to the map.");
+    for(vars.i = 0; vars.i < arr.length; vars.i++){
+        if(vars.i > 0){ code.go(7); yield sim.pause("Continue the for loop.");}
+        code.go(8); yield code.ask(11, "Select the next line to be executed. (Line 9 or 11)"); // The integers are unique
+        arr_map[arr[vars.i]] = 1;
+        code.go(11); yield sim.pause("Create a new entry.");
+    }
+    delete vars.i;
+    
+    // Iterate through pieces
+    let cond_line = 0;
+    let temp = 0;
+    code.go(14); yield sim.next("Iterate through the pieces to see if an overlap exists.");
+    for(let i = 0; i < pieces.length; i++){
+        if(i > 0){ code.go(14); yield sim.pause("Continue the for loop.");}
+        vars.p = new Seq(pieces[i]);
+        cond_line = (pieces[i].length == 1) ? 16 : 21;
+        code.go(15); yield code.ask(cond_line, "Select the next line to be executed. (Line 16 or 21)");
+        if(cond_line === 16){ // Single Piece
+            // Check if piece is in array
+            code.go(16); yield sim.click(bool_to_str(arr.find((x) => x == pieces[i][0]) !== undefined), "True or False?");
+            if(arr.find((x) => x == pieces[i][0]) !== undefined){
+                code.go(17); yield sim.set(vars.found, vars.found + 1);
+            } else {
+                code.go(19); yield sim.next("Piece doesn't overlap, so arr can't be matched.");
+                return false;
+            }
+        } else if(cond_line === 21){ // Multiple Pieces
+            vars.ix = -1;
+            code.go(21); yield sim.next("Initialize ix to search for the piece subarray.");
+            temp = arr.findIndex((x) => x == pieces[i][0]);
+            code.go(25); yield sim.ask(temp, "What is ix at the end of the for loop?");
+            vars.ix = temp;
+            code.go(26); yield sim.click(bool_to_str(sim.eq(vars.ix, -1)), "True or False?");
+            if(sim.eq(vars.ix, -1)){ return false;}
+            // Compare arr's subarray to p
+            code.go(29); yield sim.click(bool_to_str(arraysEqual(arr.slice(vars.ix, vars.ix + pieces[i].length), pieces[i])),
+            "True or False?");
+            // Note; There's a typing problem here, the + prefix in arrayEquals fixes it. I don't know why it works here but not for earlier comparisons.
+            if(arraysEqual(arr.slice(vars.ix, vars.ix + pieces[i].length), pieces[i])){
+                code.go(30); yield sim.set(vars.found, vars.found + pieces[i].length);
+            } else {
+                code.go(32); yield sim.next("Piece doesn't overlap, so arr can't be matched.");
+                return false;
+            }
+        }
+    }
+    code.go(33); yield sim.click(bool_to_str(sim.eq(vars.found, arr.length)), "True or False?")
+    return sim.eq(vars.found, arr.length);
+}
+
+const code = sim.add(0, 0, new Code(`
+def arrayFormation(arr, pieces):
+    # With unique integers, check length of overlap
+    found = 0
+        
+    # Load arr into map 
+    arr_map = {}
+    for x in arr:
+        if x in arr_map.keys():
+            arr_map[x] = arr_map[x] + 1
+        else:
+            arr_map[x] = 1
+                
+    # Iterate through pieces
+    for p in pieces:
+        if len(p) == 1:     # Single Piece
+            if p[0] in arr_map.keys():
+                found = found + 1
+            else:
+                return False
+        elif len(p) > 1:    # Multiple Pieces
+            ix = -1
+            for i in range(0,len(arr)):
+                if (arr[i] == p[0]):
+                    ix = i
+                    break
+            if (ix == -1):
+                return False
+            # Compare arr's subarray to p
+            if (arr[ix:(len(p) + ix)] == p):
+                found = found + len(p)
+            else:
+                return False
+    return found == len(arr)
+
+arr_x = [${state.a}]
+pie_x = [[${state.b[0]}],[${state.b[1]}],[${state.b[2]}]]
+arrayFormation(arr_x, pie_x)
+`));
+
+// Start the simulation
+const vars = sim.add(11, 0, new Frame("arrayFormation"));
+sim.addButtons("True", "False");
+code.go(37); yield sim.start(state);
+let result = yield* arrayFormation(state.a, state.b);
+if(result){
+    yield sim.next("The function returns true, the pieces can form the array.");
+} else {
+    yield sim.next("The function returns false, the pieces cannot form the array.");
+}
+code.go(37); yield sim.next("The program finishes.");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>
