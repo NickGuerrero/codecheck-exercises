@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Obj } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+addExercise(function*(sim, state) {
+const samples_a = [3, 16, 0];
+const samples_b = [6, 64, 9];
+if (state === undefined) {
+  let temp = sim.randInt(0,2)
+  state = {
+    a: samples_a[temp],
+    b: samples_b[temp]
+  }
+}
+
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+function* gcd(a, b){
+    // Intialize the vars frame
+    const vars = sim.add(7, 0, new Frame("gcd"));
+    vars.A = a;
+    vars.B = b;
+    
+    // Conditional sections
+    code.go(1); yield sim.next("Initialize function");
+    code.go(2); yield sim.click(bool_to_str(sim.eq(vars.A, 0)), "True or False?");
+    if(a == 0){
+        code.go(3); yield sim.next("Return B");
+        return;
+    }
+    code.go(4); yield sim.click(bool_to_str(sim.eq(vars.B, 0)), "True or False?");
+    if(b == 0){
+        code.go(5); yield sim.next("Return A");
+        return;
+    }
+    code.go(6); yield sim.click(bool_to_str(vars.A < vars.B), "True or False?");
+    vars.mini = null;
+    if(a < b){
+        code.go(7); yield sim.set(vars.mini, a);
+    } else {
+        code.go(9); yield sim.set(vars.mini, b);
+    }
+    
+    // GCD For Loop
+    code.go(10); yield sim.next("Begin the for loop");
+    vars.num = null;
+    for(vars.i = 1; vars.i < vars.mini + 1; vars.i++){
+        if(vars.i > 1){ code.go(10); yield sim.next("Continue for loop"); }
+        code.go(11); yield sim.set(vars.num, Math.floor(vars.mini / vars.i));
+        code.go(12); yield sim.click(bool_to_str((a % vars.num == 0) && (b % vars.num == 0)), "True or False?");
+        if((a % vars.num == 0) && (b % vars.num == 0)){
+            code.go(13); yield sim.next("Return num, the gcd");
+            return;
+        }
+    }
+}
+
+const code = sim.add(0, 0, new Code(`
+def gcd(A, B):
+    if A == 0:
+        return B;
+    if B == 0:
+        return A;
+    if A < B:
+        mini = A;
+    else:
+        mini = B;
+    for i in range(1, mini + 1):
+        num = mini // i;
+        if A % num == 0 and B % num == 0:
+            return num;
+
+print(gcd(${state.a}, ${state.b}))
+`));
+
+// Start the simulation
+sim.addButtons("True", "False");
+code.go(15); yield sim.start(state);
+yield* gcd(state.a, state.b);
+code.go(15); yield sim.next("The program finishes");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

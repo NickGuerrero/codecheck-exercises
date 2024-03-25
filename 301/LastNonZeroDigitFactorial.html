@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Seq } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+addExercise(function*(sim, state) {
+const samples = [4, 11, 24, 26, 29];
+if (state === undefined) { 
+  state = {
+    a: samples[sim.randInt(0, 4)]
+  }
+}
+
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+// Warning: New frame must be made for each call, be careful to not provide large samples
+const dig = [1, 1, 2, 6, 4, 2, 2, 4, 2, 8];
+function* lastNonDigit(n, frames, frame_no){
+    // Create a new frame
+    frames.push(sim.add(9.5, 1.1 + frame_no * 2.1, new Frame("lastNon0Digit_" + frame_no.toString())));
+    code.go(4); yield sim.next("Initialize the function");
+    code.go(4); yield sim.ask(n, "What's the value of n?");
+    frames[frame_no].n = n;
+    code.go(6); yield sim.click(bool_to_str(n < 10), "True or False?");
+    if(n < 10){
+        code.go(7); yield sim.ask(dig[n], "What value is being returned?");
+        frames[frame_no].return_value = dig[n];
+        return dig[n];
+    }
+    
+    // Check whether tens (or second last) digit is odd
+    code.go(10); yield sim.click(bool_to_str(
+    sim.eq(((Math.floor(n / 10) % 10) % 2), 0) // This is the code condition, it's longer here
+    ), "True or False?");
+    if(sim.eq(((Math.floor(n / 10) % 10) % 2), 0)){
+        code.go(11); yield sim.next("Recursive call");
+        let cond = yield* lastNonDigit(Math.floor(n / 5), frames, frame_no + 1);
+        code.go(11); yield sim.next("Return to function call lastNon0Digit_" + frame_no.toString());
+        code.go(11); yield sim.ask((6 * cond * dig[n % 10]) % 10, "What value is being returned?");
+        frames[frame_no].return_value = (6 * cond * dig[n % 10]) % 10;
+        return (6 * cond * dig[n % 10]) % 10;
+    } else {
+        code.go(13); yield sim.next("Recursive call");
+        let cond = yield* lastNonDigit(Math.floor(n / 5), frames, frame_no + 1);
+        code.go(13); yield sim.next("Return to function call lastNon0Digit_" + frame_no.toString());
+        code.go(13); yield sim.ask((4 * cond * dig[n % 10]) % 10, "What value is being returned?");
+        frames[frame_no].return_value = (4 * cond * dig[n % 10]) % 10;
+        return (4 * cond * dig[n % 10]) % 10;
+    }
+    return 0; // This line should never run, but here just in case
+}
+
+const code = sim.add(0, 0, new Code(`
+# numbers from 0 to 9
+dig = [1, 1, 2, 6, 4, 2, 2, 4, 2, 8]
+
+def lastNon0Digit(n):
+    """Returns the last non-zero digit of n!"""
+    if (n < 10):
+        return dig[n]
+
+    # Check whether tens (or second last) digit is odd or even
+    if (((n//10)%10)%2 == 0):
+        return (6*lastNon0Digit(n//5)*dig[n%10]) % 10
+    else:
+        return (4*lastNon0Digit(n//5)*dig[n%10]) % 10
+    return 0
+
+lastNon0Digit(${state.a})
+`));
+
+// Start the simulation
+sim.addButtons("True", "False");
+const vars = sim.add(9.5, 0, new Frame());
+vars.dig = new Seq([1, 1, 2, 6, 4, 2, 2, 4, 2, 8]);
+code.go(16); yield sim.start(state);
+yield* lastNonDigit(state.a, new Array(0), 0);
+code.go(16); yield sim.next("The program finishes");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

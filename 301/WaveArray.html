@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Arr, Obj } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+addExercise(function*(sim, state) {
+const samples = [
+[1, 2, 3, 4],
+[1, 2, 3, 4, 5],
+[2, 3, 4, 5]
+];
+
+if (state === undefined) { 
+  state = {
+    a: samples[sim.randInt(0, 2)]
+  }
+}
+
+// Helper functions
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+function* get_wave_array(a_list){
+    // Prepare simulation objects
+    const vars = sim.add(11, 0, new Frame("get_wave_array"));
+    const arr_list = sim.add(11, 3, new Arr("a_list"));
+    for(let i = 0; i < a_list.length; i++){
+        arr_list[i] = a_list[i];
+    }
+    
+    // Being simulation
+    code.go(1); yield sim.next("Initialize the function");
+    code.go(3); yield sim.next("We sort the array", "The array has already been sorted for you");
+    code.go(6); yield sim.next("Begin the for loop");
+    for(let i = 0; i < a_list.length - 1; i += 2){
+        code.go(7);
+    }
+    code.go(10); yield sim.next("Return the list", "The question asks to return the list, even though the array is edited in place.");
+}
+
+const code = sim.add(0, 0, new Code(`
+def get_wave_array(a_list):
+    """Returns a list of the waved like arrangement of the list, a_list"""
+    a_list.sort();
+    
+    # Swap places
+    for i in range(0, len(a_list) - 1, 2):
+        if a_list[i] <= a_list[i + 1]:
+            a_list[i], a_list[i + 1] = a_list[i + 1], a_list[i]
+
+    return a_list
+    
+get_wave_array([${state.a}])
+`));
+
+// Begin the simulation
+sim.addButtons("True", "False");
+code.go(12); yield sim.start(state);
+yield* get_wave_array(state.a);
+code.go(12); yield sim.next("The program finishes");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

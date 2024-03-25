@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Obj } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+addExercise(function*(sim, state) {
+if (state === undefined) { 
+  state = {
+    a: sim.randInt(4, 8)
+  }
+}
+
+// Helper function
+function remove0s(x){
+    while(x % 10 == 0){
+        x = Math.floor(x / 10);
+    }
+    return x;
+}
+
+function* firstDigit(n){
+    vars.n = n;
+    code.go(1); yield sim.next("Initialize the function");
+    vars.fact = 1;
+    code.go(3); yield sim.next("Initialize fact");
+    code.go(4); yield sim.next("Start the for loop");
+    for(vars.i = 2; vars.i < n + 1; vars.i++){
+        if(vars.i > 2){ code.go(4); yield sim.next("Continue the for loop"); }
+        code.go(5); yield sim.set(vars.fact, vars.fact * vars.i);
+        code.go(7); vars.fact = yield sim.ask(remove0s(vars.fact), "What is fact after this while loop?");
+    }
+    
+    // Clean up frame to prevent long variable history
+    delete vars.i;
+    let fact_temp = vars.fact; // Used as flag later
+    delete vars.fact;
+    vars.fact = fact_temp;
+    
+    // Extract the first digit
+    code.go(11); yield sim.next("Start the while loop");
+    while(vars.fact >= 10){
+        if(vars.fact == fact_temp){ code.go(11); yield sim.next("Continue the while loop"); }
+        code.go(12); yield sim.set(vars.fact, Math.floor(vars.fact / 10));
+    }
+    code.go(13); yield sim.next("The function returns the first digit");
+}
+
+// Code Block
+const code = sim.add(0, 0, new Code(`
+def firstFactDigit(n) :
+    '''Returns the first digit of n!'''
+    fact = 1
+    for i in range(2, n + 1):
+        fact = fact * i
+        # Removing trailing 0s
+        while (fact % 10 == 0):
+            fact = int(fact / 10)
+
+    # Extract the first digit
+    while (fact >= 10) :
+        fact = fact // 10
+    return fact
+
+firstFactDigit(${state.a})
+`));
+
+// Start the simulation
+const vars = sim.add(7, 0, new Frame("firstDigit"));
+code.go(15); yield sim.start(state);
+yield* firstDigit(state.a);
+code.go(15); yield sim.next("Finish the program");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Obj } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+const samples = [4, 3, 0, 32, 2];
+addExercise(function*(sim, state) {
+if (state === undefined) { 
+  state = {
+    a: sim.randInt(1, 10)
+  }
+}
+
+// Helper functions
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+function* digitCheck(bool, line){
+    code.go(line); yield sim.click(bool_to_str(bool), "True or False?");
+    if(bool){
+        code.go(line + 1); yield sim.next("Function returns the last digit");
+        return true;
+    }
+    return false;
+}
+
+function* lastFactDigit(n){
+    vars.n = n;
+    code.go(1); yield sim.next("Initialize function");
+    if(yield* digitCheck(n == 0, 2)) return;
+    if(yield* digitCheck(n <= 2, 4)) return;
+    if(yield* digitCheck(n == 3, 6)) return;
+    if(yield* digitCheck(n == 4, 8)) return;
+    if(yield* digitCheck(n >= 5, 10)) return;
+}
+
+const code = sim.add(0, 0, new Code(`
+def lastFactDigit(n):
+    if(n == 0):
+        return 1
+    elif(n <= 2):
+        return n
+    elif(n == 3):
+        return 6
+    elif(n == 4):
+        return 4
+    elif(n >= 5):
+        return 0
+
+lastFactDigit(${state.a})
+`));
+
+// Start simulation
+sim.addButtons("True", "False");
+const vars = sim.add(5, 0, new Frame("lastFactDigit"));
+code.go(13); yield sim.start(state);
+yield* lastFactDigit(state.a);
+code.go(13); yield sim.next("Program finishes");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

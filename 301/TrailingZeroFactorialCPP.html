@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Obj } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+addExercise(function*(sim, state) {
+if (state === undefined) { 
+  state = {
+    a: 100
+  }
+}
+
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+function* trailingZeroFactorial(n){
+    // Initialize function
+    const vars = sim.add(6, 0, new Frame("trailingZeroFactorial"));
+    vars.n = n;
+    code.go(1); yield sim.next("Initialize the function");
+    vars.count = 0;
+    code.go(2); yield sim.next("Initialize count");
+    vars.i = 5;
+    code.go(3); yield sim.next("Initialize i");
+    
+    // While loop
+    code.go(4); yield sim.next("Begin the while loop");
+    while(n / vars.i >= 1){
+        code.go(5); yield sim.set(vars.count, vars.count + Math.floor(n / vars.i));
+        code.go(6); yield sim.set(vars.i, vars.i * 5);
+        code.go(4); yield sim.click(bool_to_str((n / vars.i) >= 1), "Does the loop continue, True or False?")
+    }
+    code.go(8); yield sim.next("Return count");
+    return;
+}
+
+const code = sim.add(0, 0, new Code(`
+int trailingZeroFactorial(int n){
+  int count = 0;
+  int i = 5;
+  while(n / i >= 1){
+    count += n / i;
+    i *= 5;
+  }
+  return count;
+}
+
+int main() {
+  trailingZeroFactorial(5);
+}
+`));
+
+// Start the simulation
+sim.addButtons("True", "False");
+code.go(12); yield sim.start(state);
+yield* trailingZeroFactorial(state.a);
+code.go(12); yield sim.next("Finish the program");
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>

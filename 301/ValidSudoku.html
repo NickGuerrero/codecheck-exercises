@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link href='https://horstmann.com/codecheck/css/codecheck_tracer.css' rel='stylesheet' type='text/css'/>  <title>JS Bin</title>
+</head>
+<body>
+    <div class='codecheck_tracer'>
+      <script type='module'>//<![CDATA[
+import { addExercise, Code, Frame, Arr, Obj, Mat, Seq } from 'https://horstmann.com/codecheck/script/codecheck_tracer.js';
+
+addExercise(function*(sim, state) {
+// Sample Sudoku Boards
+const board1 = [["8", "3", ".", ".", "7", ".", ".", ".", "."],
+         ["6", ".", ".", "1", "9", "5", ".", ".", "."],
+         [".", "9", "8", ".", ".", ".", ".", "6", "."],
+         ["8", ".", ".", ".", "6", ".", ".", ".", "3"],
+         ["4", ".", ".", "8", ".", "3", ".", ".", "1"],
+         ["7", ".", ".", ".", "2", ".", ".", ".", "6"],
+         [".", "6", ".", ".", ".", ".", "2", "8", "."],
+         [".", ".", ".", "4", "1", "9", ".", ".", "5"],
+         [".", ".", ".", ".", "8", ".", ".", "7", "9"]];
+const board2 = [["5", "3", ".", ".", "7", ".", ".", ".", "."],
+         ["6", ".", ".", "1", "9", "5", ".", ".", "."],
+         [".", "9", "8", ".", ".", ".", ".", "6", "."],
+         ["8", ".", ".", ".", "6", ".", ".", ".", "3"],
+         ["4", ".", ".", "8", ".", "3", ".", ".", "1"],
+         ["7", ".", ".", ".", "2", ".", ".", ".", "6"],
+         [".", "6", ".", ".", ".", ".", "2", "8", "."],
+         [".", ".", ".", "4", "1", "9", ".", ".", "5"],
+         [".", ".", ".", ".", "8", ".", ".", "7", "9"]]
+const board3 = [['.','.','.','.','.','.','.','.','.'], 
+         ['.','7','9','.','5','.','1','8','.'],
+         ['8','.','.','.','.','.','.','.','7'],
+         ['.','.','7','3','.','6','8','.','.'],
+         ['4','5','.','7','.','8','.','9','6'],
+         ['.','.','3','5','.','2','7','.','.'],
+         ['7','.','.','.','.','.','.','.','5'],
+         ['.','1','6','.','3','.','4','2','.'],
+         ['.','.','.','.','.','.','.','.','.']]
+const board4 = [['.','.','7','.','.','.','.','.','.'],
+         ['.','7','9','.','5','.','1','8','.'],
+         ['8','.','.','.','.','.','.','.','7'],
+         ['.','.','7','3','.','6','8','.','.'],
+         ['4','5','.','7','.','8','.','9','6'],
+         ['.','.','3','5','.','2','7','.','.'],
+         ['7','.','.','.','.','.','.','.','5'],
+         ['.','1','6','.','3','.','4','2','.'],
+         ['.','.','.','.','.','.','.','.','.']]
+const samples = [board1, board2, board3, board4];
+const answers = [false, true, true, false];
+
+if (state === undefined) { 
+  state = {
+    a: samples[sim.randInt(0, 3)]
+  }
+}
+
+// Helper functions
+function bool_to_str(bool){
+    return (bool) ? "True" : "False";
+}
+
+// Note: Sometimes there are issues with Seq and Mat destroying the intial array
+function deepcopy(x){
+    return JSON.parse(JSON.stringify(x));
+}
+
+// Pull array from Seq
+function seqToArray(sq){
+    let ret = Array(sq.length);
+    for(let i = 0; i < sq.length; i++){
+        ret[i] = sq[i];
+    }
+    return ret;
+}
+
+// CodeBlock functions
+// Problem: On code simulation, the set 
+// Note: The -1 should only be applied if there's at least one ".", otheriwse it's a miscount
+function* is_not_valid_sudoku_list(list, flag){    // TODO: list is undefined
+    let period_count = list.filter(x => x == ".").length; // Arrays should be small
+    let list_set = new Set(list);
+    
+    // Code simulation
+    code.go(1); yield sim.next("Call is_not_valid_sudoku_list");
+    if(flag){
+        code.go(3); yield sim.ask(list_set.size, "What is len(set(sudoku_list))?");
+        code.go(3); yield sim.ask(period_count, 'What is sudoku_list.count(".")?');
+    }
+    console.log(list_set.size);
+    console.log(period_count);
+    console.log(list_set.size + period_count);
+    code.go(3); yield sim.click(bool_to_str((list_set.size + period_count - 1) < 9), "True or False?");
+    return (list_set.size - 1 + period_count) < 9;
+}
+
+function* get_sub_grid_as_list(grid, st_i, st_j, flag){
+    // Get the sub_grid
+    let temp = new Array(9);
+    let index = 0;
+    for(let j = st_j; j < st_j + 3; j++){
+        temp[index] = grid[j][st_i].toString();
+        temp[index + 1] = grid[j][st_i + 1].toString();
+        temp[index + 2] = grid[j][st_i + 2].toString();
+        index += 3;
+    }
+
+    // Code simulation
+    code.go(5); yield sim.next("Call get_sub_grid_as_list");
+    code.go(6); yield sim.next("Create a list that contains the subgrid");
+    if(flag){
+        code.go(10); yield sim.ask("[" + temp.join(",") + "]",
+        "What is the value of sub_grid after the loop?", "Ex: '[1,2,3,4,5,6,7,8,9]'");
+    } else {
+        code.go(10); yield sim.pause("Returning the sub-grid as a list");
+    }
+    return temp;
+}
+
+function* validate_sudoku_board(grid){
+    console.log("Start");
+    // Initialize the function
+    code.go(12); yield sim.next("Initialize the function");
+    const cols_as_rows = sim.add(11.5, 6.5, new Arr("cols_as_rows"));
+    code.go(14); yield sim.next("Initialize array for storing the columns as rows");
+    code.go(15); yield sim.next("Begin the for loop: Check rows and prepare columns");
+    
+    // Validate rows
+    for(vars.rows_numbers = 0; vars.rows_numbers < 9; vars.rows_numbers++){
+        if(!sim.eq(vars.rows_numbers, 0)){ code.go(15); yield sim.next("Continue the for loop"); }
+        code.go(16); yield sim.next("Call is_not_valid_sudoku_list");
+        if(yield* is_not_valid_sudoku_list(grid[vars.rows_numbers], false)){
+            code.go(17); yield sim.next("This list is not valid, return False");
+            return false;
+        }
+        cols_as_rows[cols_as_rows.length] = null;
+        code.go(18); yield sim.next("Create a new row for the cols_as_rows list");
+        
+        // Build column rows
+        code.go(19); yield sim.next("Create the next row for the cols_as_row list");
+        cols_as_rows[vars.rows_numbers] = new Seq();
+        for(let i = 0; i < 9; i++){
+            cols_as_rows[vars.rows_numbers][i] = grid[i][vars.rows_numbers].toString();
+        }
+    }
+    
+    // Validate columns
+    vars.cols = 0;
+    code.go(22); yield sim.next("Begin the for loop: Check columns");
+    for(let i = 0; i < 9; i++){
+        vars.cols = i;
+        code.go(23); yield sim.next("Call is_not_valid_sudoku_list");
+        if(yield* is_not_valid_sudoku_list(seqToArray(cols_as_rows[i]), false)){
+            code.go(24); yield sim.next("This list is not valid, return False");
+            return false;
+        }
+    }
+    
+    // Validate subgrids
+    const sub_grid_as_list = sim.add(17, 6.5, new Arr("sub_grid_as_list"));
+    vars.i = 0;
+    vars.j = 0;
+    code.go(26); yield sim.next("Begin the for loop: Check the subgrids");
+    let sub_i = 0;
+    let temp_list = null;
+    for(let j = 0; j < 7; j = j + 3){
+        vars.j = j;
+        for(let i = 0; i < 7; i = i + 3){
+            vars.i = i;
+            code.go(28); yield sim.next("Call get_sub_grid_as_list");
+            temp_list = yield* get_sub_grid_as_list(grid, i, j);
+            sub_grid_as_list[sub_i] = new Seq(deepcopy(temp_list));
+            code.go(29); yield sim.next("Call is_not_valid_sudoku_list"); //yield sim.click(bool_to_str(), "True or False"); // TODO
+            if(yield* is_not_valid_sudoku_list(temp_list, false)){
+                code.go(30); yield sim.next("This list is not valid, return False");
+                return false;
+            }
+            sub_i++;
+        }
+    }
+    
+    // Finish the program
+    code.go(31); yield sim.next("All lists are valid, the sudoku board is valid");
+    return true;
+}
+
+const code = sim.add(0, 0, new Code(`
+def is_not_valid_sudoku_list(sudoku_list):
+    """Returns True if sudoku_list is not valid"""
+    return len(set(sudoku_list)) - 1 + sudoku_list.count(".") < 9
+
+def get_sub_grid_as_list(board, start_i, start_j):
+    """Returns the sub-grid starting at i, j"""
+    sub_grid = []
+    for num_j in range(start_j, start_j + 3):
+        sub_grid += board[num_j][start_i:start_i + 3]
+    return sub_grid
+
+def validate_sudoku_board(board):
+    """Returns True if the board is a valid Sudoku"""
+    cols_as_rows = []
+    for rows_numbers in range(9):                   # Validate row
+        if is_not_valid_sudoku_list(board[rows_numbers]):
+            return False
+        cols_as_rows.append([])
+        for row in board:                           # Build column rows
+            cols_as_rows[rows_numbers].append(row[rows_numbers])
+    
+    for cols in cols_as_rows:                       # Validate columns
+        if is_not_valid_sudoku_list(cols):
+            return False
+    
+    for start_j in range(0, 7, 3):                  # Validate the subgrids
+        for start_i in range(0, 7, 3):
+            sub_grid_as_list = get_sub_grid_as_list(board, start_i, start_j)
+            if is_not_valid_sudoku_list(sub_grid_as_list):
+                return False
+    return True
+    
+validate_sudoku_board(grid) # Grid displayed on the right
+`));
+
+// Start the simulation
+sim.addButtons("True", "False");
+const sudoku_board = sim.add(11.5, 0, new Mat(state.a));
+const vars = sim.add(16, 0, new Frame());
+code.go(33); yield sim.start(state);
+yield* validate_sudoku_board(state.a);
+code.go(33); yield sim.next("Finish the program");
+
+
+})
+// ]]>
+      </script>
+  </div>
+</body>
+</html>
